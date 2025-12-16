@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
+use App\Models\Enseignant;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class EtudiantController extends Controller
 {
@@ -12,8 +14,10 @@ class EtudiantController extends Controller
      */
     public function index()
     {
-        $etudiants = \App\Models\Etudiant::all();
-        return view('etudiants', compact('etudiants'));
+        $etudiants = Etudiant::with('enseignant')->get();
+        return Inertia::render('Etudiants', [
+            'etudiants' => $etudiants
+        ]); 
     }
 
     /**
@@ -21,7 +25,11 @@ class EtudiantController extends Controller
      */
     public function create()
     {
-        //
+        // Récupérer les enseignants pour le select
+        $enseignants = Enseignant::all();
+        return Inertia::render('EtudiantsCreate', [
+            'enseignants' => $enseignants
+        ]);
     }
 
     /**
@@ -29,7 +37,23 @@ class EtudiantController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+        'matricule' => 'required|string|max:50',
+        'nom' => 'required|string|max:100',
+        'prenom' => 'required|string|max:100',
+        'filiere' => 'required|string|max:100',
+        'niveau' => 'required|string|max:100',
+        'enseignant_id' => 'required|exists:enseignants,id',
+        ]);
+            Etudiant::create([
+                'matricule' => $request->matricule,
+                'nom'       => $request->nom,
+                'prenom'    => $request->prenom,
+                'filiere'   => $request->filiere,
+                'niveau'    => $request->niveau,
+                'enseignant_id' => $request->enseignant_id,
+            ]);
+            return redirect()->route('etudiants.index');
     }
 
     /**
